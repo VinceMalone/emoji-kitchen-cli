@@ -12,6 +12,13 @@ where
 }
 
 #[derive(serde::Deserialize, Clone, Debug)]
+pub struct EmojiSkinVariation {
+    #[serde(rename(deserialize = "unified"))]
+    #[serde(deserialize_with = "lowercase_serialize")]
+    pub codepoint: String,
+}
+
+#[derive(serde::Deserialize, Clone, Debug)]
 pub struct Emoji {
     #[serde(rename(deserialize = "unified"))]
     #[serde(deserialize_with = "lowercase_serialize")]
@@ -22,6 +29,18 @@ pub struct Emoji {
     pub category: String,
     pub subcategory: String,
     pub sort_order: u16,
+    #[serde(default)]
+    pub skin_variations: HashMap<String, EmojiSkinVariation>,
+}
+
+pub fn get_emoji_map() -> HashMap<String, Emoji> {
+    let json: Vec<Emoji> = serde_json::from_slice(include_bytes!("./emoji.json"))
+        .expect("Failed to find or parse JSON!");
+    let mut map = HashMap::new();
+    for emoji in json {
+        map.insert(emoji.codepoint.to_string(), emoji.clone());
+    }
+    map
 }
 
 #[derive(Debug)]
@@ -110,25 +129,34 @@ pub struct EmojiDB {
     pub pairs: Vec<EmojiPair>,
 }
 
-pub fn init() -> EmojiDB {
+pub struct Options {
+    pub name: Option<String>,
+}
+
+pub fn init(options: Options) -> EmojiDB {
     let pairs_list: Vec<&str> = str::from_utf8(include_bytes!("./pairs.txt"))
         .unwrap()
         .trim()
         .split("\n")
         .collect();
 
-    let emoji_json: Vec<Emoji> = serde_json::from_slice(include_bytes!("./emoji.json"))
-        .expect("Failed to find or parse JSON!");
-    let mut emoji_map = HashMap::new();
-    for emoji in emoji_json {
-        emoji_map.insert(emoji.codepoint.to_string(), emoji.clone());
-    }
+    let emoji_map = get_emoji_map();
 
     let mut pairs: Vec<EmojiPair> = Vec::new();
 
     for pair in pairs_list {
         let emoji_pair = EmojiPair::from_pair_string(pair, &emoji_map);
-        pairs.push(emoji_pair);
+
+        match &options.name {
+            Some(name) => {
+                if emoji_pair.base.short_name.eq(name) || emoji_pair.pair.short_name.eq(name) {
+                    pairs.push(emoji_pair);
+                }
+            }
+            None => {
+                pairs.push(emoji_pair);
+            }
+        }
     }
 
     pairs.sort_by(|a, b| a.sort_order.cmp(&b.sort_order));

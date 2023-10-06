@@ -6,8 +6,17 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-image = "0.24.5"
-reqwest = "0.11.13"
+base64 = "0.13.1"
+clap = { version = "4.0.27", features = ["derive"] }
+dotenv = "0.15.0"
+dotenv_codegen = "0.15.0"
+futures = "0.3.25"
+gif = "0.12.0"
+image = { version = "0.24.5", features = ["webp-encoder"] }
+reqwest = { version = "0.11.13", features = ["json", "multipart", "stream"] }
+reqwest-middleware = "0.2.0"
+reqwest-retry = "0.2.0"
 serde = { version = "1.0.147", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1.22.0", features = ["full"] }
+viuer = "0.6.2"
